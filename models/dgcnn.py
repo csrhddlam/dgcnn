@@ -17,7 +17,7 @@ def placeholder_inputs(batch_size, num_point):
   return pointclouds_pl, labels_pl
 
 
-def get_model(point_cloud, is_training, bn_decay=None):
+def get_model(point_cloud, is_training, bn_decay=None, norm=None, ws=True):
   """ Classification PointNet, input is BxNx3, output Bx40 """
   batch_size = point_cloud.get_shape()[0].value
   num_point = point_cloud.get_shape()[1].value
@@ -29,7 +29,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
   edge_feature = tf_util.get_edge_feature(point_cloud, nn_idx=nn_idx, k=k)
 
   with tf.variable_scope('transform_net1') as sc:
-    transform = input_transform_net(edge_feature, is_training, bn_decay, K=3)
+    transform = input_transform_net(edge_feature, is_training, bn_decay, K=3, norm=norm, ws=ws)
 
   point_cloud_transformed = tf.matmul(point_cloud, transform)
   adj_matrix = tf_util.pairwise_distance(point_cloud_transformed)
@@ -38,7 +38,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
 
   net = tf_util.conv2d(edge_feature, 64, [1,1],
                        padding='VALID', stride=[1,1],
-                       bn=True, is_training=is_training,
+                       norm=norm, ws=ws, is_training=is_training,
                        scope='dgcnn1', bn_decay=bn_decay)
   net = tf.reduce_max(net, axis=-2, keep_dims=True)
   net1 = net
@@ -49,7 +49,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
 
   net = tf_util.conv2d(edge_feature, 64, [1,1],
                        padding='VALID', stride=[1,1],
-                       bn=True, is_training=is_training,
+                       norm=norm, ws=ws, is_training=is_training,
                        scope='dgcnn2', bn_decay=bn_decay)
   net = tf.reduce_max(net, axis=-2, keep_dims=True)
   net2 = net
@@ -60,7 +60,7 @@ def get_model(point_cloud, is_training, bn_decay=None):
 
   net = tf_util.conv2d(edge_feature, 64, [1,1],
                        padding='VALID', stride=[1,1],
-                       bn=True, is_training=is_training,
+                       norm=norm, ws=ws, is_training=is_training,
                        scope='dgcnn3', bn_decay=bn_decay)
   net = tf.reduce_max(net, axis=-2, keep_dims=True)
   net3 = net
@@ -71,25 +71,25 @@ def get_model(point_cloud, is_training, bn_decay=None):
   
   net = tf_util.conv2d(edge_feature, 128, [1,1],
                        padding='VALID', stride=[1,1],
-                       bn=True, is_training=is_training,
+                       norm=norm, ws=ws, is_training=is_training,
                        scope='dgcnn4', bn_decay=bn_decay)
   net = tf.reduce_max(net, axis=-2, keep_dims=True)
   net4 = net
 
   net = tf_util.conv2d(tf.concat([net1, net2, net3, net4], axis=-1), 1024, [1, 1], 
                        padding='VALID', stride=[1,1],
-                       bn=True, is_training=is_training,
+                       norm=norm, ws=ws, is_training=is_training,
                        scope='agg', bn_decay=bn_decay)
  
   net = tf.reduce_max(net, axis=1, keep_dims=True) 
 
   # MLP on global point cloud vector
   net = tf.reshape(net, [batch_size, -1]) 
-  net = tf_util.fully_connected(net, 512, bn=True, is_training=is_training,
+  net = tf_util.fully_connected(net, 512, norm=norm, ws=ws, is_training=is_training,
                                 scope='fc1', bn_decay=bn_decay)
   net = tf_util.dropout(net, keep_prob=0.5, is_training=is_training,
                          scope='dp1')
-  net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training,
+  net = tf_util.fully_connected(net, 256, norm=norm, ws=ws, is_training=is_training,
                                 scope='fc2', bn_decay=bn_decay)
   net = tf_util.dropout(net, keep_prob=0.5, is_training=is_training,
                         scope='dp2')
@@ -131,11 +131,11 @@ if __name__=='__main__':
       sess.run(tf.global_variables_initializer())
       feed_dict = {input_pl: input_feed, label_pl: label_feed}
       res1, res2 = sess.run([pos, ftr], feed_dict=feed_dict)
-      print res1.shape
-      print res1
+      print(res1.shape)
+      print(res1)
 
-      print res2.shape
-      print res2
+      print(res2.shape)
+      print(res2)
 
 
 

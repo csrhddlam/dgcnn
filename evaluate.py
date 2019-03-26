@@ -16,6 +16,8 @@ import pc_util
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--norm', default='gn', help='bn or gn [default: gn]')
+parser.add_argument('--no-ws', dest='ws', action='store_false', help='no weight standardization')
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--model', default='dgcnn', help='Model name: dgcnn [default: dgcnn]')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch Size during training [default: 1]')
@@ -25,7 +27,8 @@ parser.add_argument('--dump_dir', default='dump', help='dump folder path [dump]'
 parser.add_argument('--visu', action='store_true', help='Whether to dump image for error case [default: False]')
 FLAGS = parser.parse_args()
 
-
+NORM = FLAGS.norm
+WS = FLAGS.ws
 BATCH_SIZE = FLAGS.batch_size
 NUM_POINT = FLAGS.num_point
 MODEL_PATH = FLAGS.model_path
@@ -61,7 +64,7 @@ def evaluate(num_votes):
         is_training_pl = tf.placeholder(tf.bool, shape=())
 
         # simple model
-        pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl)
+        pred, end_points = MODEL.get_model(pointclouds_pl, is_training_pl, norm=NORM, ws=WS)
         loss = MODEL.get_loss(pred, labels_pl, end_points)
         
         # Add ops to save and restore all the variables.
