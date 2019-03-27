@@ -3,13 +3,13 @@ This project is our implementation of [Weight Standardization](https://github.co
 
 Weight Standardization is a simple reparameterization method for convolutional layers.
 It enables micro-batch training with Group Normalization (GN) to match the performances of Batch Normalization (BN) trained with large-batch sizes.
-Please see our [arXiv](https://arxiv.org/abs/1803.?????) report for the details.
+Please see our [arXiv](https://arxiv.org/abs/1803.10520) report for the details.
 If you find this project helpful, please consider citing our paper.
 ```
 @article{weightstandardization,
   author    = {Siyuan Qiao and Huiyu Wang and Chenxi Liu and Wei Shen and Alan Yuille},
   title     = {Weight Standardization},
-  journal   = {arXiv preprint arXiv:1803.?????},
+  journal   = {arXiv preprint arXiv:1803.10520},
   year      = {2019},
 }
 ```
